@@ -1,0 +1,193 @@
+:root {
+  --vt-bg: #0a0a0c;
+  --vt-surface: rgba(20, 20, 26, 0.55);
+  --vt-surface-hover: rgba(40, 40, 50, 0.7);
+  --vt-border: rgba(255, 255, 255, 0.12);
+  --vt-text: #f2f3f5;
+  --vt-text-dim: rgba(242, 243, 245, 0.6);
+  --vt-accent: #4f8cff;
+  --vt-radius: 12px;
+  --vt-blur: 12px;
+  --vt-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --vt-safe-top: env(safe-area-inset-top, 0px);
+  --vt-safe-right: env(safe-area-inset-right, 0px);
+  --vt-safe-left: env(safe-area-inset-left, 0px);
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--vt-bg);
+  color: var(--vt-text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#app {
+  height: 100%;
+}
+
+/* ---- Stage ------------------------------------------------------------- */
+
+.vt-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Disable iOS text-selection callouts during drag gestures. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.vt-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Avoid a one-frame flash of an over-scaled canvas before the first resize. */
+  outline: none;
+}
+
+/* ---- UI overlay -------------------------------------------------------- */
+
+/* The overlay spans the stage but is transparent to pointer events, so drags
+   pass through to the canvas. Interactive children opt back in. */
+.vt-ui {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.vt-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: calc(16px + var(--vt-safe-top)) calc(16px + var(--vt-safe-right)) 28px
+    calc(16px + var(--vt-safe-left));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent);
+}
+
+.vt-topbar__title {
+  pointer-events: auto;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* ---- Buttons ----------------------------------------------------------- */
+
+.vt-button {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  color: var(--vt-text);
+  background: var(--vt-surface);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  backdrop-filter: blur(var(--vt-blur));
+  -webkit-backdrop-filter: blur(var(--vt-blur));
+  cursor: pointer;
+  transition:
+    background 0.2s var(--vt-ease),
+    transform 0.1s var(--vt-ease);
+}
+
+.vt-button:hover {
+  background: var(--vt-surface-hover);
+}
+
+.vt-button:active {
+  transform: scale(0.94);
+}
+
+.vt-button:focus-visible {
+  outline: 2px solid var(--vt-accent);
+  outline-offset: 2px;
+}
+
+.vt-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---- Loading / error overlay ------------------------------------------ */
+
+.vt-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: var(--vt-bg);
+  pointer-events: auto;
+  opacity: 1;
+  transition: opacity 0.5s var(--vt-ease);
+}
+
+.vt-loading--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.vt-loading__spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--vt-accent);
+  border-radius: 50%;
+  animation: vt-spin 0.9s linear infinite;
+}
+
+.vt-loading__message {
+  margin: 0;
+  font-size: 14px;
+  color: var(--vt-text-dim);
+}
+
+.vt-loading--error .vt-loading__message {
+  color: #ff6b6b;
+}
+
+@keyframes vt-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vt-loading__spinner {
+    animation-duration: 2s;
+  }
+  .vt-button:active {
+    transform: none;
+  }
+}
