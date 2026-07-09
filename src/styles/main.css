@@ -264,6 +264,48 @@ body {
   }
 }
 
+/* ---- 360° video overlay ------------------------------------------------ */
+
+.vt-video {
+  position: absolute;
+  left: 50%;
+  bottom: calc(24px + var(--vt-safe-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100% - 32px);
+  padding: 6px 6px 6px 16px;
+  pointer-events: auto;
+  background: var(--vt-surface);
+  border: 1px solid var(--vt-border);
+  border-radius: 999px;
+  backdrop-filter: blur(var(--vt-blur));
+  -webkit-backdrop-filter: blur(var(--vt-blur));
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.vt-video[hidden] {
+  display: none;
+}
+
+.vt-video__label {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vt-video__label[hidden] {
+  display: none;
+}
+
+.vt-video__close {
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
 /* ---- Loading / error overlay ------------------------------------------ */
 
 .vt-loading {

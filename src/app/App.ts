@@ -40,6 +40,15 @@ export class App implements Disposable {
     this.viewer.events.on('link:activated', ({ targetId }) => {
       void this.navigateTo(targetId);
     });
+
+    // Media policy: an info marker announces a video; the app plays it, and the
+    // overlay's close button announces the intent to stop.
+    this.viewer.events.on('infospot:activated', (activation) => {
+      this.viewer.playVideo(activation);
+    });
+    this.viewer.events.on('video:close', () => {
+      this.viewer.stopVideo();
+    });
   }
 
   public async start(): Promise<void> {

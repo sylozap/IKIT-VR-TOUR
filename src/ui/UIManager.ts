@@ -3,6 +3,7 @@ import type { Viewer } from '@/viewer/Viewer';
 import { FullscreenButton } from './components/FullscreenButton';
 import { LoadingOverlay } from './components/LoadingOverlay';
 import { Minimap } from './components/Minimap';
+import { VideoOverlay } from './components/VideoOverlay';
 
 /**
  * Owns the DOM chrome layered above the canvas (title bar, fullscreen control,
@@ -19,6 +20,7 @@ export class UIManager implements Disposable {
   private readonly fullscreenButton: FullscreenButton;
   private readonly loadingOverlay: LoadingOverlay;
   private readonly minimap: Minimap;
+  private readonly videoOverlay: VideoOverlay;
   private readonly titleLabel: HTMLSpanElement;
   private readonly unsubscribers: Array<() => void> = [];
 
@@ -39,8 +41,14 @@ export class UIManager implements Disposable {
     topBar.append(this.titleLabel, this.fullscreenButton.element);
 
     this.minimap = new Minimap(viewer);
+    this.videoOverlay = new VideoOverlay(() => viewer.events.emit('video:close', undefined));
     this.loadingOverlay = new LoadingOverlay();
-    this.element.append(topBar, this.minimap.element, this.loadingOverlay.element);
+    this.element.append(
+      topBar,
+      this.minimap.element,
+      this.videoOverlay.element,
+      this.loadingOverlay.element,
+    );
 
     this.bindViewerEvents();
   }
@@ -50,6 +58,7 @@ export class UIManager implements Disposable {
     this.fullscreenButton.dispose();
     this.loadingOverlay.dispose();
     this.minimap.dispose();
+    this.videoOverlay.dispose();
     this.element.remove();
   }
 
@@ -68,6 +77,8 @@ export class UIManager implements Disposable {
         this.loadingOverlay.showLoading('Восстановление графики…'),
       ),
       events.on('context:restored', () => this.loadingOverlay.hide()),
+      events.on('video:started', ({ label }) => this.videoOverlay.show(label)),
+      events.on('video:stopped', () => this.videoOverlay.hide()),
     );
   }
 }

@@ -23,6 +23,22 @@ export interface PanoramaLink {
   label?: string;
 }
 
+/**
+ * A non-navigation marker: tapping it plays an equirectangular 360° video in
+ * place of the panorama, then returns to the scene when the clip ends or is
+ * closed. Placement uses the same yaw/pitch basis as {@link PanoramaLink}.
+ */
+export interface InfoSpot {
+  /** Horizontal angle of the marker, in degrees. */
+  yaw: number;
+  /** Vertical angle of the marker, in degrees. */
+  pitch: number;
+  /** URL of the equirectangular (2:1) 360° video, served from `public/`. */
+  video: string;
+  /** Optional caption shown while the video plays. */
+  label?: string;
+}
+
 export interface PanoramaNode {
   id: string;
   title: string;
@@ -34,6 +50,8 @@ export interface PanoramaNode {
   initialPitch: number;
   /** Outgoing navigation links. May be empty. */
   links: PanoramaLink[];
+  /** Optional 360° video markers placed in this scene. */
+  infoSpots?: InfoSpot[];
 }
 
 /** A 2D size in CSS pixels. */

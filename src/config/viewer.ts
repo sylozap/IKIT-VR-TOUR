@@ -66,6 +66,20 @@ export const viewerConfig = {
     tapThreshold: 8,
   },
 
+  infospot: {
+    /** Marker size in world units (the height). Info badges are square. */
+    size: 55,
+    /** Same projection distance as nav markers so both sit on one shell. */
+    distance: 200,
+    /** Breathing animation, matched to nav markers but a touch calmer. */
+    pulseAmplitude: 0.1,
+    pulseSpeed: 2,
+    /** Diameter of the procedurally-drawn badge texture, in pixels. */
+    textureSize: 256,
+    /** Badge fill; the play glyph is drawn white on top. */
+    color: '#4f8cff',
+  },
+
   minimap: {
     /** Direction of camera yaw on the map. If the view cone turns the *wrong*
      * way when you look around, flip this to -1. (Sign is global for the floor;

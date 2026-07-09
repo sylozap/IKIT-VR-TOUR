@@ -73,6 +73,9 @@ export class Minimap implements Disposable {
 
     this.unsubscribers.push(
       viewer.events.on('panorama:loaded', ({ node }) => this.showPanorama(node.id)),
+      // A 360° video takes over the whole view; the map has nothing to point at.
+      viewer.events.on('video:started', () => this.setHiddenByVideo(true)),
+      viewer.events.on('video:stopped', () => this.setHiddenByVideo(false)),
     );
   }
 
@@ -107,6 +110,17 @@ export class Minimap implements Disposable {
     if (located.floor !== this.floor) this.renderFloor(located.floor);
     this.setCurrent(located.point);
     if (!this.collapsed) this.startLoop();
+  }
+
+  /** Fold the panel away while a video plays, restore it when the scene returns. */
+  private setHiddenByVideo(hidden: boolean): void {
+    if (hidden) {
+      this.element.hidden = true;
+      this.stopLoop();
+    } else if (this.current) {
+      this.element.hidden = false;
+      if (!this.collapsed) this.startLoop();
+    }
   }
 
   private renderFloor(floor: Floor): void {

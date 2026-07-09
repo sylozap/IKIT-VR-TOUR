@@ -73,7 +73,7 @@ const floor2: Floor = {
     { id: 'Коридор_219', x: 110, y: 90, northOffset: 215},
     { id: 'Коридор_перед_лестницей', x: 110, y: 54, northOffset: 215 },
     { id: 'Стенд', x: 80, y: 20, northOffset: 215  },
-    { id: 'Сибкодинг', x: 60, y: 25, northOffset: 215  },
+    { id: 'Сибкодинг_вход', x: 60, y: 25, northOffset: 215  },
     // Room 201 (bottom-left).
     { id: '201_пр_стол', x: 28, y: 280, northOffset: 210 },
     { id: '201_экран', x: 55, y: 280, northOffset: 235 },
@@ -109,6 +109,7 @@ const sibcoding: Floor = {
     { id: 'Сибкодинг_вход', x: 98, y: 122, northOffset: -10 },
     { id: 'Сибкодинг_коридор', x: 146, y: 122, northOffset: 260 },
     { id: 'Сибкодинг_стол', x: 211, y: 122, northOffset: -50 },
+    { id: 'Стенд', x: 80, y: 140, northOffset: -50 },
   ],
 };
 

@@ -92,6 +92,9 @@ export const panoramas: PanoramaNode[] = [
       { targetId: '220_сзади_слева', yaw: 180, pitch: -10, label: 'В коридор' },
       { targetId: '220_сзади_справа', yaw: 205, pitch: -10, label: 'В коридор' }
     ],
+    infoSpots: [
+      { yaw: 30, pitch: 0, video: '/assets/videos/4_VR_AR_220.mp4', label: 'Аудитория 220' }
+    ],
   },
   {
     id: '220_сзади_слева',
@@ -160,6 +163,9 @@ export const panoramas: PanoramaNode[] = [
       { targetId: '201_центр', yaw: 55, pitch: -25, label: 'В коридор' },
       { targetId: '201_задние_ряды', yaw: 55, pitch: -13, label: 'В коридор' }
     ],
+    infoSpots: [
+      { yaw: 220, pitch: 0, video: '/assets/videos/3_KIBER_POLIGON_201.mp4', label: 'Аудитория 201' }
+    ],
   },
   {
     id: '201_центр',
@@ -203,6 +209,9 @@ export const panoramas: PanoramaNode[] = [
     initialPitch: 0,
     links: [
       { targetId: '219_вход', yaw: 75, pitch: -10, label: 'В коридор' },],
+    infoSpots: [
+      { yaw: -120, pitch: 0, video: '/assets/videos/2_VID_GIBRID_219.mp4', label: 'Аудитория 219' }
+    ],
   },
   {
     id: 'Сибкодинг_вход',
@@ -249,6 +258,9 @@ export const panoramas: PanoramaNode[] = [
       { targetId: 'Сибкодинг_награды', yaw: -150, pitch: -20, label: 'В коридор' },
       { targetId: 'Сибкодинг_стол', yaw: -180, pitch: -20, label: 'В коридор' },
     ],
+    infoSpots: [
+      { yaw: 200, pitch: 0, video: '/assets/videos/5_SIBKOD_1.mp4', label: 'Сибкодинг' }
+    ],
   },
   {
     id: 'Сибкодинг_доска',
@@ -283,4 +295,4 @@ export const panoramas: PanoramaNode[] = [
 ];
 
 /** Id of the panorama shown on first load. */
-export const entryPanoramaId = 'Сибкодинг_стол'
+export const entryPanoramaId = 'Сибкодинг_коридор'

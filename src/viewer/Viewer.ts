@@ -1,6 +1,8 @@
+import { SRGBColorSpace, VideoTexture } from 'three';
 import type { Disposable } from '@/core/Disposable';
 import type { PanoramaNode, Size } from '@/core/types';
 import type { ViewerEvents } from '@/core/events';
+import type { InfoActivation } from '@/hotspots/HotspotLayer';
 import { EventBus } from '@/core/EventBus';
 import { Renderer } from '@/engine/Renderer';
 import { RenderLoop } from '@/engine/RenderLoop';
@@ -42,6 +44,9 @@ export class Viewer implements Disposable {
   private readonly resizeObserver: ResizeObserver;
 
   private currentPanorama: Panorama | null = null;
+  /** The 360° video sphere shown over the scene while a clip plays. */
+  private videoPanorama: Panorama | null = null;
+  private videoElement: HTMLVideoElement | null = null;
   /** Aborts the in-flight load when a newer one starts or on dispose. */
   private loadAbort: AbortController | null = null;
   private disposed = false;
@@ -56,7 +61,10 @@ export class Viewer implements Disposable {
       this.sceneManager,
       this.cameraController.camera,
       options.container,
-      (targetId) => this.events.emit('link:activated', { targetId }),
+      {
+        onNavigate: (targetId) => this.events.emit('link:activated', { targetId }),
+        onInfo: (activation) => this.events.emit('infospot:activated', activation),
+      },
     );
     this.loader = new PanoramaLoader(this.renderer.maxAnisotropy);
     this.renderLoop = new RenderLoop(this.tick);
@@ -80,6 +88,8 @@ export class Viewer implements Disposable {
    * the new texture is ready, so the screen never flashes empty.
    */
   public async loadPanorama(node: PanoramaNode): Promise<void> {
+    // Leaving a scene always ends any 360° video playing over it.
+    this.stopVideo();
     this.loadAbort?.abort();
     const abort = new AbortController();
     this.loadAbort = abort;
@@ -100,7 +110,7 @@ export class Viewer implements Disposable {
       }
       this.currentPanorama = next;
       this.cameraController.setOrientation(node.initialYaw, node.initialPitch, true);
-      this.hotspots.setLinks(node.links);
+      this.hotspots.setContent(node.links, node.infoSpots ?? []);
 
       this.events.emit('panorama:loaded', { node });
     } catch (error) {
@@ -108,6 +118,67 @@ export class Viewer implements Disposable {
       this.events.emit('panorama:error', { id: node.id, error });
       throw error;
     }
+  }
+
+  /**
+   * Play an equirectangular 360° video on the sphere in place of the current
+   * panorama. The panorama sphere and its markers are hidden (not disposed) and
+   * restored by {@link stopVideo}, which also fires when the clip ends. The
+   * camera keeps its orientation, so the user simply looks around the video.
+   */
+  public playVideo(activation: InfoActivation): void {
+    this.stopVideo();
+    if (this.disposed || !this.currentPanorama) return;
+
+    const video = document.createElement('video');
+    video.src = activation.video;
+    video.crossOrigin = 'anonymous';
+    video.loop = false;
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.addEventListener('ended', this.onVideoEnded);
+    video.addEventListener('error', this.onVideoError);
+    this.videoElement = video;
+
+    const texture = new VideoTexture(video);
+    texture.colorSpace = SRGBColorSpace;
+    const sphere = new Panorama(texture);
+    this.videoPanorama = sphere;
+
+    this.sceneManager.remove(this.currentPanorama.mesh);
+    this.sceneManager.add(sphere.mesh);
+    this.hotspots.setActive(false);
+
+    void video.play().catch(() => {
+      // Autoplay was refused or the source is missing — bail out cleanly.
+      this.stopVideo();
+    });
+
+    this.events.emit('video:started', activation.label ? { label: activation.label } : {});
+  }
+
+  /** Tear down the 360° video (if any) and restore the panorama scene. */
+  public stopVideo(): void {
+    if (!this.videoPanorama && !this.videoElement) return;
+
+    if (this.videoElement) {
+      this.videoElement.removeEventListener('ended', this.onVideoEnded);
+      this.videoElement.removeEventListener('error', this.onVideoError);
+      this.videoElement.pause();
+      this.videoElement.removeAttribute('src');
+      this.videoElement.load();
+      this.videoElement = null;
+    }
+    if (this.videoPanorama) {
+      this.sceneManager.remove(this.videoPanorama.mesh);
+      this.videoPanorama.dispose();
+      this.videoPanorama = null;
+    }
+    if (this.currentPanorama && !this.disposed) {
+      this.sceneManager.add(this.currentPanorama.mesh);
+      this.hotspots.setActive(true);
+    }
+    if (!this.disposed) this.events.emit('video:stopped', undefined);
   }
 
   public resize(): void {
@@ -121,6 +192,7 @@ export class Viewer implements Disposable {
     this.disposed = true;
 
     this.loadAbort?.abort();
+    this.stopVideo();
     this.renderLoop.stop();
     this.resizeObserver.disconnect();
     this.controls.dispose();
@@ -152,7 +224,20 @@ export class Viewer implements Disposable {
   private readonly tick = (deltaSeconds: number): void => {
     this.cameraController.update(deltaSeconds);
     this.hotspots.update(deltaSeconds);
+    // Push the newest decoded video frame to the GPU while a clip plays.
+    if (this.videoPanorama) this.videoPanorama.refresh();
     this.renderer.render(this.sceneManager.scene, this.cameraController.camera);
+  };
+
+  private readonly onVideoEnded = (): void => {
+    this.stopVideo();
+  };
+
+  private readonly onVideoError = (): void => {
+    // The scene is still mounted behind the video, so fail quietly back to it;
+    // `stopVideo` emits `video:stopped` and the UI dismisses the overlay.
+    console.error(`360° video failed to load: "${this.videoElement?.src ?? ''}"`);
+    this.stopVideo();
   };
 
   private readonly handleContextLost = (): void => {
