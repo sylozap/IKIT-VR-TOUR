@@ -28,7 +28,7 @@ export const panoramas: PanoramaNode[] = [
     id: 'Коридор_202',
     title: 'Коридор',
     image: '/assets/panoramas/Коридор_202.jpg',
-    initialYaw: 200,
+    initialYaw: 180,
     initialPitch: 0,
     links: [
       { targetId: 'Коридор_201_220', yaw: -5, pitch: -18, label: 'Дальше по коридору' },
@@ -39,7 +39,7 @@ export const panoramas: PanoramaNode[] = [
     id: 'Коридор_203',
     title: 'Коридор',
     image: '/assets/panoramas/Коридор_203_220А.jpg',
-    initialYaw: 200,
+    initialYaw: 195,
     initialPitch: 0,
     links: [
       { targetId: 'Коридор_202', yaw: 12, pitch: -18, label: 'Дальше по коридору' },
@@ -50,7 +50,7 @@ export const panoramas: PanoramaNode[] = [
     id: 'Коридор_219',
     title: 'Коридор',
     image: '/assets/panoramas/Коридор_219.jpg',
-    initialYaw: 200,
+    initialYaw: 215,
     initialPitch: 0,
     links: [
       { targetId: 'Коридор_203', yaw: 30, pitch: -23, label: 'Дальше по коридору' },
@@ -62,7 +62,7 @@ export const panoramas: PanoramaNode[] = [
     id: 'Коридор_перед_лестницей',
     title: 'Коридор',
     image: '/assets/panoramas/Коридор_перед_лестницой.jpg',
-    initialYaw: 200,
+    initialYaw: 250,
     initialPitch: 0,
     links: [
       { targetId: 'Коридор_219', yaw: 45, pitch: -16, label: 'Дальше по коридору' },
@@ -73,12 +73,11 @@ export const panoramas: PanoramaNode[] = [
     id: 'Стенд',
     title: 'Коридор',
     image: '/assets/panoramas/Стенд.jpg',
-    initialYaw: 200,
-    initialPitch: 0,
+    initialYaw: 220,
+    initialPitch: -10,
     links: [
       { targetId: 'Коридор_перед_лестницей', yaw: 65, pitch: -25, label: 'Дальше по коридору' },
       { targetId: 'Сибкодинг_вход', yaw: -50, pitch: -15, label: 'Дальше по коридору' },
-      { targetId: 'сибкодинг_вход', yaw: -100, pitch: -40, label: 'В коридор' },
     ],
   },
   {
@@ -142,7 +141,7 @@ export const panoramas: PanoramaNode[] = [
     id: '201_пр_стол',
     title: 'Аудитория 201',
     image: '/assets/panoramas/201_пр_стол.jpg',
-    initialYaw: 200,
+    initialYaw: 80,
     initialPitch: 0,
     links: [
       { targetId: '201_вход', yaw: 125, pitch: -5, label: 'В коридор' },

@@ -32,16 +32,21 @@ export class Hotspot implements Disposable {
 
     this.sprite = new Sprite(material);
     this.sprite.position.copy(direction.multiplyScalar(distance));
-    this.sprite.scale.setScalar(size);
+    this.sprite.scale.set(size, size, 1);
     // Always draw markers on top of the panorama sphere.
     this.sprite.renderOrder = 10;
     this.sprite.userData.targetId = link.targetId;
     this.sprite.userData.label = link.label ?? '';
   }
 
-  /** `factor` is the current pulse multiplier around 1.0. */
-  public setPulse(factor: number): void {
-    this.sprite.scale.setScalar(this.baseSize * factor);
+  /**
+   * `factor` is the current pulse multiplier around 1.0. `aspect` (width/height
+   * of the marker image) keeps a non-square icon from stretching: `size` sets
+   * the height, width follows the image.
+   */
+  public setPulse(factor: number, aspect: number): void {
+    const height = this.baseSize * factor;
+    this.sprite.scale.set(height * aspect, height, 1);
   }
 
   public dispose(): void {

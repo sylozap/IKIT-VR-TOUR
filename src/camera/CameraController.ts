@@ -1,5 +1,5 @@
 import { PerspectiveCamera, Vector3 } from 'three';
-import { clamp, damp, degToRad } from '@/utils/math';
+import { clamp, damp, degToRad, radToDeg } from '@/utils/math';
 import { viewerConfig } from '@/config/viewer';
 
 /**
@@ -54,6 +54,11 @@ export class CameraController {
   /** Current effective FOV in degrees — controls scale their sensitivity by it. */
   public get fov(): number {
     return this.currentFov;
+  }
+
+  /** Current eased yaw in degrees — read by the minimap direction cone. */
+  public get yawDegrees(): number {
+    return radToDeg(this.currentYaw);
   }
 
   /**

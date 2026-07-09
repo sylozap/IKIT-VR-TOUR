@@ -43,6 +43,8 @@ export class HotspotLayer implements Disposable {
 
   private hotspots: Hotspot[] = [];
   private elapsed = 0;
+  /** Marker image aspect (width/height); 1 until the texture image loads. */
+  private iconAspect = 1;
 
   /** The candidate press being tracked for tap detection. */
   private press: { id: number; x: number; y: number } | null = null;
@@ -89,10 +91,11 @@ export class HotspotLayer implements Disposable {
   /** Drive the breathing animation; called once per frame. */
   public update(deltaSeconds: number): void {
     if (this.hotspots.length === 0) return;
+    this.refreshIconAspect();
     this.elapsed += deltaSeconds;
     const { pulseAmplitude, pulseSpeed } = viewerConfig.hotspot;
     const factor = 1 + Math.sin(this.elapsed * pulseSpeed) * pulseAmplitude;
-    for (const hotspot of this.hotspots) hotspot.setPulse(factor);
+    for (const hotspot of this.hotspots) hotspot.setPulse(factor, this.iconAspect);
   }
 
   public dispose(): void {
@@ -109,6 +112,16 @@ export class HotspotLayer implements Disposable {
   private clearHotspots(): void {
     for (const hotspot of this.hotspots) hotspot.dispose();
     this.hotspots = [];
+  }
+
+  /** The marker image loads asynchronously; latch its true aspect ratio once
+   * the pixels are in, so a non-square icon renders undistorted. */
+  private refreshIconAspect(): void {
+    if (this.iconAspect !== 1) return;
+    const image = this.texture.image as { width?: number; height?: number } | undefined;
+    if (image?.width && image.height) {
+      this.iconAspect = image.width / image.height;
+    }
   }
 
   private readonly onPointerDown = (event: PointerEvent): void => {

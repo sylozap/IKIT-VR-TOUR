@@ -11,6 +11,7 @@
   --vt-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --vt-safe-top: env(safe-area-inset-top, 0px);
   --vt-safe-right: env(safe-area-inset-right, 0px);
+  --vt-safe-bottom: env(safe-area-inset-bottom, 0px);
   --vt-safe-left: env(safe-area-inset-left, 0px);
 
   color-scheme: dark;
@@ -135,6 +136,132 @@ body {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* ---- Minimap ----------------------------------------------------------- */
+
+.vt-minimap {
+  position: absolute;
+  right: calc(16px + var(--vt-safe-right));
+  bottom: calc(16px + var(--vt-safe-bottom, 0px));
+  width: min(260px, 42vw);
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--vt-surface);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  backdrop-filter: blur(var(--vt-blur));
+  -webkit-backdrop-filter: blur(var(--vt-blur));
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.vt-minimap__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 8px 8px 12px;
+}
+
+.vt-minimap__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vt-text);
+}
+
+.vt-minimap__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: var(--vt-text-dim);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.2s var(--vt-ease), background 0.2s var(--vt-ease);
+}
+
+.vt-minimap__toggle:hover {
+  color: var(--vt-text);
+  background: var(--vt-surface-hover);
+}
+
+.vt-minimap__toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.25s var(--vt-ease);
+}
+
+.vt-minimap.is-collapsed .vt-minimap__toggle svg {
+  transform: rotate(180deg);
+}
+
+.vt-minimap__plan {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 0 10px 10px;
+  overflow: visible;
+}
+
+.vt-minimap.is-collapsed .vt-minimap__plan {
+  display: none;
+}
+
+.vt-minimap__room {
+  fill: rgba(255, 255, 255, 0.05);
+  stroke: var(--vt-border);
+  stroke-width: 1;
+}
+
+.vt-minimap__room-label {
+  fill: var(--vt-text-dim);
+  font-size: 8px;
+  font-weight: 600;
+  text-anchor: start;
+  dominant-baseline: hanging;
+  pointer-events: none;
+}
+
+.vt-minimap__point {
+  fill: rgba(242, 243, 245, 0.55);
+  stroke: rgba(10, 10, 12, 0.6);
+  stroke-width: 1;
+  cursor: pointer;
+  transition: fill 0.15s var(--vt-ease), r 0.15s var(--vt-ease);
+}
+
+.vt-minimap__point:hover {
+  fill: var(--vt-text);
+}
+
+.vt-minimap__point.is-current {
+  fill: var(--vt-accent);
+  stroke: #fff;
+  cursor: default;
+}
+
+.vt-minimap__cone {
+  fill: var(--vt-accent);
+  opacity: 0.32;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vt-minimap__toggle svg,
+  .vt-minimap__point {
+    transition: none;
+  }
 }
 
 /* ---- Loading / error overlay ------------------------------------------ */

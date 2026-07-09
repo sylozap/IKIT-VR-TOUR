@@ -49,17 +49,35 @@ export const viewerConfig = {
   maxPixelRatio: 2,
 
   hotspot: {
+    /** Image used for every marker. Swap this one path to restyle all markers.
+     * Served from `public/`, so the path is web-absolute. */
+    icon: '/assets/ui/arrow.png',
     /** Distance from the camera (center) at which markers sit, in world units.
      * Must stay well inside {@link sphere.radius}. */
     distance: 200,
-    /** Marker size in world units. Constant size reads like physical signage. */
-    size: 26,
+    /** Marker size in world units (the height; width follows the image aspect).
+     * Constant size reads like physical signage. */
+    size: 60,
     /** Breathing animation depth, as a fraction of `size`. */
     pulseAmplitude: 0.12,
     pulseSpeed: 2.5,
     /** Max pointer travel (px) between press and release still counted as a tap,
      * so navigation never fires at the end of a look-around drag. */
     tapThreshold: 8,
+  },
+
+  minimap: {
+    /** Direction of camera yaw on the map. If the view cone turns the *wrong*
+     * way when you look around, flip this to -1. (Sign is global for the floor;
+     * per-scene aim is set by `northOffset` in the floorplan config.) */
+    yawSign: -1,
+    /** Length of the view-direction cone, in floor viewBox units. */
+    coneRadius: 30,
+    /** Half-width of the cone, in degrees. */
+    coneHalfAngle: 32,
+    /** Radius of an ordinary point dot / the highlighted current dot. */
+    pointRadius: 4.5,
+    currentPointRadius: 6,
   },
 } as const;
 

@@ -2,6 +2,7 @@ import type { Disposable } from '@/core/Disposable';
 import type { Viewer } from '@/viewer/Viewer';
 import { FullscreenButton } from './components/FullscreenButton';
 import { LoadingOverlay } from './components/LoadingOverlay';
+import { Minimap } from './components/Minimap';
 
 /**
  * Owns the DOM chrome layered above the canvas (title bar, fullscreen control,
@@ -17,6 +18,7 @@ export class UIManager implements Disposable {
   private readonly viewer: Viewer;
   private readonly fullscreenButton: FullscreenButton;
   private readonly loadingOverlay: LoadingOverlay;
+  private readonly minimap: Minimap;
   private readonly titleLabel: HTMLSpanElement;
   private readonly unsubscribers: Array<() => void> = [];
 
@@ -36,8 +38,9 @@ export class UIManager implements Disposable {
     this.fullscreenButton = new FullscreenButton(fullscreenTarget);
     topBar.append(this.titleLabel, this.fullscreenButton.element);
 
+    this.minimap = new Minimap(viewer);
     this.loadingOverlay = new LoadingOverlay();
-    this.element.append(topBar, this.loadingOverlay.element);
+    this.element.append(topBar, this.minimap.element, this.loadingOverlay.element);
 
     this.bindViewerEvents();
   }
@@ -46,6 +49,7 @@ export class UIManager implements Disposable {
     for (const off of this.unsubscribers) off();
     this.fullscreenButton.dispose();
     this.loadingOverlay.dispose();
+    this.minimap.dispose();
     this.element.remove();
   }
 

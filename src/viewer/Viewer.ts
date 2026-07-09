@@ -131,6 +131,11 @@ export class Viewer implements Disposable {
     this.events.clear();
   }
 
+  /** Live camera yaw in degrees, for UI that visualises the look direction. */
+  public get cameraYaw(): number {
+    return this.cameraController.yawDegrees;
+  }
+
   private get size(): Size {
     // Guard against a zero-height container during early layout.
     return {
