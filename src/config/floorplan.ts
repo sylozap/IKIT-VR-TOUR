@@ -14,8 +14,9 @@
  * panorama was shot with an arbitrary "north", so this is tuned once per scene
  * by eye — see README, section "Миникарта и калибровка направления".
  *
- * Сибкодинг lives on another floor and gets its own map later; its scenes simply
- * have no entry here, and the minimap hides itself while they are shown.
+ * Сибкодинг is a second floor with its own map; the stairs connect the two via
+ * `portal` points (see {@link FloorPoint.portal}). Any scene with no entry on
+ * any floor simply hides the minimap while it is shown.
  */
 
 export interface FloorRoom {
@@ -34,6 +35,14 @@ export interface FloorPoint {
   y: number;
   /** Map bearing (deg, cw, 0 = up) the camera faces at yaw 0. Default 0. */
   northOffset?: number;
+  /**
+   * A cross-floor shortcut, not the scene's home. The same panorama can appear
+   * on two floors — e.g. the stairs dot on floor 2 that leads down to Сибкодинг.
+   * A portal dot is still clickable (it navigates), but it never decides which
+   * floor the minimap shows: {@link findFloorPoint} prefers the non-portal copy,
+   * so arriving at the scene switches the map to the floor it truly lives on.
+   */
+  portal?: boolean;
 }
 
 export interface Floor {
@@ -73,7 +82,8 @@ const floor2: Floor = {
     { id: 'Коридор_219', x: 110, y: 90, northOffset: 215},
     { id: 'Коридор_перед_лестницей', x: 110, y: 54, northOffset: 215 },
     { id: 'Стенд', x: 80, y: 20, northOffset: 215  },
-    { id: 'Сибкодинг_вход', x: 60, y: 25, northOffset: 215  },
+    // Stairs shortcut down to Сибкодинг; the scene itself lives on that floor.
+    { id: 'Сибкодинг_вход', x: 60, y: 25, northOffset: 215, portal: true },
     // Room 201 (bottom-left).
     { id: '201_пр_стол', x: 28, y: 280, northOffset: 210 },
     { id: '201_экран', x: 55, y: 280, northOffset: 235 },
@@ -109,17 +119,27 @@ const sibcoding: Floor = {
     { id: 'Сибкодинг_вход', x: 98, y: 122, northOffset: -10 },
     { id: 'Сибкодинг_коридор', x: 146, y: 122, northOffset: 260 },
     { id: 'Сибкодинг_стол', x: 211, y: 122, northOffset: -50 },
-    { id: 'Стенд', x: 80, y: 140, northOffset: -50 },
+    // Exit shortcut back up to the corridor; Стенд itself lives on floor 2.
+    { id: 'Стенд', x: 80, y: 140, northOffset: -50, portal: true },
   ],
 };
 
 export const floors: Floor[] = [floor2, sibcoding];
 
-/** Locate the floor and point a panorama sits on, or `null` if it is unmapped. */
+/**
+ * Locate the floor and point a panorama sits on, or `null` if it is unmapped.
+ *
+ * When the same id appears on two floors (a portal shortcut plus the real spot),
+ * the non-portal home wins, so arriving at a scene always shows the floor it
+ * truly lives on. A portal-only id falls back to the portal.
+ */
 export function findFloorPoint(id: string): { floor: Floor; point: FloorPoint } | null {
+  let portalFallback: { floor: Floor; point: FloorPoint } | null = null;
   for (const floor of floors) {
     const point = floor.points.find((p) => p.id === id);
-    if (point) return { floor, point };
+    if (!point) continue;
+    if (!point.portal) return { floor, point };
+    portalFallback ??= { floor, point };
   }
-  return null;
+  return portalFallback;
 }

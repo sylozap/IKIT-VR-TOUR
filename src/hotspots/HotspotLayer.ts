@@ -65,7 +65,7 @@ export class HotspotLayer implements Disposable {
   private enabled = true;
 
   /** The candidate press being tracked for tap detection. */
-  private press: { id: number; x: number; y: number } | null = null;
+  private press: { id: number; x: number; y: number; time: number } | null = null;
   /** A second simultaneous pointer cancels the candidate (pinch, not tap). */
   private multiTouch = false;
 
@@ -189,7 +189,12 @@ export class HotspotLayer implements Disposable {
       this.multiTouch = true;
       return;
     }
-    this.press = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    this.press = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      time: event.timeStamp,
+    };
   };
 
   private readonly onPointerUp = (event: PointerEvent): void => {
@@ -204,6 +209,8 @@ export class HotspotLayer implements Disposable {
 
     const travel = Math.hypot(event.clientX - press.x, event.clientY - press.y);
     if (travel > viewerConfig.hotspot.tapThreshold) return;
+    // A long press is a hold-to-steer gesture, not a tap — don't navigate.
+    if (event.timeStamp - press.time > viewerConfig.hotspot.tapMaxDuration) return;
 
     this.activate(event.clientX, event.clientY);
   };

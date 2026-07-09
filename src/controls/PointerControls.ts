@@ -1,29 +1,49 @@
 import type { Disposable } from '@/core/Disposable';
 import type { CameraController } from '@/camera/CameraController';
-import { degToRad } from '@/utils/math';
+import { clamp, degToRad } from '@/utils/math';
 import { viewerConfig } from '@/config/viewer';
 
+const ARROW_SVG =
+  `<svg viewBox="0 0 24 24" aria-hidden="true">` +
+  `<path d="M4 12h13M12 6l6 6-6 6"/></svg>`;
+
 /**
- * Translates Pointer Events into camera commands. Pointer Events unify mouse,
- * touch and pen, so a single implementation serves desktop drag *and* mobile —
- * with a two-finger pinch routed to zoom.
+ * Press-and-hold "steering" controls. Instead of dragging the image, the user
+ * presses anywhere and the panorama turns **toward that side of the screen** —
+ * the farther the press is from the centre, the faster it turns — and keeps
+ * turning while the button is held, even without moving. A directional arrow
+ * replaces the cursor to show which way (and, by its offset, roughly how fast).
  *
- * Rotation uses an "angle-per-pixel" model derived from the current vertical
- * FOV and viewport height, so dragging feels 1:1 with the image regardless of
- * zoom level, then is multiplied by the configured sensitivity.
+ * Pointer Events unify mouse, touch and pen, so one implementation drives desktop
+ * and mobile; a two-finger gesture is routed to pinch-zoom instead of steering.
+ *
+ * Rotation is applied per frame from {@link update}: each frame the pointer's
+ * offset from centre is turned into an angular velocity and integrated with the
+ * frame delta, which keeps the turn rate smooth and frame-rate independent.
  */
 export class PointerControls implements Disposable {
   private readonly element: HTMLElement;
   private readonly camera: CameraController;
+  private readonly cursor: HTMLDivElement;
 
-  /** Active pointers by id → last known position. Drives drag vs. pinch. */
+  /** Active pointers by id → last known position. Drives steer vs. pinch. */
   private readonly pointers = new Map<number, { x: number; y: number }>();
   private pinchDistance = 0;
   private enabled = true;
+  /** The pointer currently steering (single-pointer press), if any. */
+  private steerId: number | null = null;
+  private steerIsMouse = false;
 
   constructor(element: HTMLElement, camera: CameraController) {
     this.element = element;
     this.camera = camera;
+
+    this.cursor = document.createElement('div');
+    this.cursor.className = 'vt-steer-cursor';
+    this.cursor.innerHTML = ARROW_SVG;
+    this.cursor.hidden = true;
+    element.appendChild(this.cursor);
+
     element.addEventListener('pointerdown', this.onPointerDown);
     element.addEventListener('pointermove', this.onPointerMove);
     element.addEventListener('pointerup', this.onPointerUp);
@@ -37,6 +57,7 @@ export class PointerControls implements Disposable {
     if (!enabled) {
       this.pointers.clear();
       this.pinchDistance = 0;
+      this.stopSteering();
     }
   }
 
@@ -45,14 +66,43 @@ export class PointerControls implements Disposable {
     this.element.removeEventListener('pointermove', this.onPointerMove);
     this.element.removeEventListener('pointerup', this.onPointerUp);
     this.element.removeEventListener('pointercancel', this.onPointerUp);
+    this.stopSteering();
+    this.cursor.remove();
     this.pointers.clear();
+  }
+
+  /** Integrate the current steer velocity; called once per frame by the viewer. */
+  public update(deltaSeconds: number): void {
+    if (this.steerId === null || this.pointers.size !== 1) return;
+    const pos = this.pointers.get(this.steerId);
+    if (!pos) return;
+
+    const rect = this.element.getBoundingClientRect();
+    const nx = clamp((pos.x - (rect.left + rect.width / 2)) / (rect.width / 2), -1, 1);
+    const ny = clamp((pos.y - (rect.top + rect.height / 2)) / (rect.height / 2), -1, 1);
+    if (Math.hypot(nx, ny) < viewerConfig.rotation.panDeadZone) return;
+
+    const { speed, invertX, invertY, panMaxSpeed } = viewerConfig.rotation;
+    const maxRate = degToRad(panMaxSpeed) * speed * deltaSeconds;
+    // Turn toward the press: right of centre → look right (yaw decreases), below
+    // centre → look down (pitch decreases).
+    const yaw = -nx * maxRate * (invertX ? -1 : 1);
+    const pitch = -ny * maxRate * (invertY ? -1 : 1);
+    this.camera.rotate(yaw, pitch);
   }
 
   private readonly onPointerDown = (event: PointerEvent): void => {
     if (!this.enabled) return;
     this.element.setPointerCapture(event.pointerId);
     this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    if (this.pointers.size === 2) {
+
+    if (this.pointers.size === 1) {
+      this.steerId = event.pointerId;
+      this.steerIsMouse = event.pointerType === 'mouse';
+      this.updateCursor(event.clientX, event.clientY);
+    } else if (this.pointers.size === 2) {
+      // A second finger switches from steering to pinch-zoom.
+      this.stopSteering();
       this.pinchDistance = this.currentPinchDistance();
     }
   };
@@ -61,18 +111,14 @@ export class PointerControls implements Disposable {
     if (!this.enabled) return;
     const previous = this.pointers.get(event.pointerId);
     if (!previous) return;
-
-    if (this.pointers.size >= 2) {
-      this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-      this.handlePinch();
-      return;
-    }
-
-    const dx = event.clientX - previous.x;
-    const dy = event.clientY - previous.y;
     previous.x = event.clientX;
     previous.y = event.clientY;
-    this.handleDrag(dx, dy);
+
+    if (this.pointers.size >= 2) {
+      this.handlePinch();
+    } else if (this.steerId === event.pointerId) {
+      this.updateCursor(event.clientX, event.clientY);
+    }
   };
 
   private readonly onPointerUp = (event: PointerEvent): void => {
@@ -80,19 +126,38 @@ export class PointerControls implements Disposable {
     if (this.element.hasPointerCapture(event.pointerId)) {
       this.element.releasePointerCapture(event.pointerId);
     }
-    if (this.pointers.size < 2) {
-      this.pinchDistance = 0;
+
+    if (event.pointerId === this.steerId) this.stopSteering();
+    if (this.pointers.size < 2) this.pinchDistance = 0;
+    // A single finger left after a pinch resumes steering with it.
+    if (this.pointers.size === 1) {
+      const id = [...this.pointers.keys()][0];
+      const pos = id === undefined ? undefined : this.pointers.get(id);
+      if (id !== undefined && pos) {
+        this.steerId = id;
+        this.updateCursor(pos.x, pos.y);
+      }
     }
   };
 
-  private handleDrag(dx: number, dy: number): void {
-    const { speed, invertX, invertY } = viewerConfig.rotation;
-    const anglePerPixel = degToRad(this.camera.fov) / this.element.clientHeight;
-    const factor = anglePerPixel * speed;
-    // Drag right → look right (yaw decreases in our left-handed look basis).
-    const yaw = -dx * factor * (invertX ? -1 : 1);
-    const pitch = dy * factor * (invertY ? -1 : 1);
-    this.camera.rotate(yaw, pitch);
+  /** Point the arrow from the viewport centre toward the pointer (mouse only). */
+  private updateCursor(x: number, y: number): void {
+    if (!this.steerIsMouse) return;
+    const rect = this.element.getBoundingClientRect();
+    const dx = x - (rect.left + rect.width / 2);
+    const dy = y - (rect.top + rect.height / 2);
+    const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+    this.cursor.style.transform =
+      `translate(${x - rect.left}px, ${y - rect.top}px) translate(-50%, -50%) rotate(${angle}deg)`;
+    this.cursor.hidden = false;
+    this.element.style.cursor = 'none';
+  }
+
+  private stopSteering(): void {
+    this.steerId = null;
+    this.steerIsMouse = false;
+    this.cursor.hidden = true;
+    this.element.style.cursor = '';
   }
 
   private handlePinch(): void {

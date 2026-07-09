@@ -3,6 +3,7 @@ import type { Disposable } from '@/core/Disposable';
 import type { PanoramaNode, Size } from '@/core/types';
 import type { ViewerEvents } from '@/core/events';
 import type { InfoActivation } from '@/hotspots/HotspotLayer';
+import { degToRad } from '@/utils/math';
 import { EventBus } from '@/core/EventBus';
 import { Renderer } from '@/engine/Renderer';
 import { RenderLoop } from '@/engine/RenderLoop';
@@ -208,6 +209,18 @@ export class Viewer implements Disposable {
     return this.cameraController.yawDegrees;
   }
 
+  /** Change the field of view by `deltaFov` degrees (negative zooms in). Used by
+   * the on-screen zoom buttons; damping makes each press glide. */
+  public zoomBy(deltaFov: number): void {
+    this.cameraController.zoom(deltaFov);
+  }
+
+  /** Nudge the view by a fixed yaw/pitch step in degrees. Used by the on-screen
+   * arrow buttons for precise, small movements. */
+  public nudge(deltaYawDeg: number, deltaPitchDeg: number): void {
+    this.cameraController.rotate(degToRad(deltaYawDeg), degToRad(deltaPitchDeg));
+  }
+
   private get size(): Size {
     // Guard against a zero-height container during early layout.
     return {
@@ -222,6 +235,7 @@ export class Viewer implements Disposable {
   }
 
   private readonly tick = (deltaSeconds: number): void => {
+    this.controls.update(deltaSeconds);
     this.cameraController.update(deltaSeconds);
     this.hotspots.update(deltaSeconds);
     // Push the newest decoded video frame to the GPU while a clip plays.

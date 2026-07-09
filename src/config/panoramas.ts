@@ -295,4 +295,4 @@ export const panoramas: PanoramaNode[] = [
 ];
 
 /** Id of the panorama shown on first load. */
-export const entryPanoramaId = 'Сибкодинг_коридор'
+export const entryPanoramaId = 'Коридор_201_220'

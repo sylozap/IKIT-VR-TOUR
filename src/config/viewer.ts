@@ -15,12 +15,19 @@ export const viewerConfig = {
   pitchLimit: 85,
 
   rotation: {
-    /** Multiplier applied to drag-to-rotate sensitivity. */
+    /** Multiplier applied to rotate sensitivity. */
     speed: 1,
-    /** Invert horizontal drag direction. */
+    /** Invert horizontal direction. */
     invertX: false,
-    /** Invert vertical drag direction. */
+    /** Invert vertical direction. */
     invertY: false,
+    /** Press-and-hold "steer" model: the panorama turns toward the pointer, and
+     * the farther the pointer is from the viewport centre the faster it turns.
+     * This is the top angular speed (deg/second) reached at the very edge. */
+    panMaxSpeed: 130,
+    /** Fraction of the half-viewport around the centre with no rotation, so a
+     * still press near the middle holds steady instead of drifting. */
+    panDeadZone: 0.05,
   },
 
   zoom: {
@@ -64,6 +71,19 @@ export const viewerConfig = {
     /** Max pointer travel (px) between press and release still counted as a tap,
      * so navigation never fires at the end of a look-around drag. */
     tapThreshold: 8,
+    /** Max press duration (ms) still counted as a tap, so holding to steer the
+     * panorama never fires navigation on release. */
+    tapMaxDuration: 300,
+  },
+
+  /** On-screen button pad (zoom + fine stepwise pan). */
+  buttons: {
+    /** FOV change per zoom-button press, in degrees. */
+    zoomStep: 6,
+    /** Yaw/pitch change per arrow-button press, in degrees. */
+    panStep: 8,
+    /** While a button is held, repeat the step every this-many milliseconds. */
+    repeatInterval: 90,
   },
 
   infospot: {
