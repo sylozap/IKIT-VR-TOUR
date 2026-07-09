@@ -5,3 +5,7 @@ dist-ssr
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
+
+# Тяжёлые медиа — хранятся вне git (превышают лимиты GitHub)
+public/assets/videos/
+public/assets/panoramas/
